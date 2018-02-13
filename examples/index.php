@@ -1,17 +1,9 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-
+<!doctype html>
 <html>
 
     <head>
-
         <title>Zebra_Mptt example</title>
-
         <meta http-equiv="content-type" content="text/html;charset=UTF-8">
-
-        <meta http-equiv="Content-Script-Type" content="text/javascript">
-
-        <meta http-equiv="Content-Style-Type" content="text/css">
-
     </head>
 
     <body>
@@ -24,35 +16,31 @@
         <?php
 
         // database connection details
-        $MySQL_host     = '';
-        $MySQL_username = '';
-        $MySQL_password = '';
-        $MySQL_database = '';
+        $mysql_host     = '';
+        $mysql_username = '';
+        $mysql_password = '';
+        $mysql_database = '';
 
         // if could not connect to database
-        if (!($connection = @mysql_connect($MySQL_host, $MySQL_username, $MySQL_password))) {
+        ($connection = @mysqli_connect($mysql_host, $mysql_username, $mysql_password)) or
 
             // stop execution and display error message
             die('Error connecting to the database!<br>Make sure you have specified correct values for host, username and password.');
 
-        }
-
         // if database could not be selected
-        if (!@mysql_select_db($MySQL_database, $connection)) {
+        @mysqli_select_db($connection, $mysql_database) or
 
             // stop execution and display error message
             die('Error selecting database!<br>Make sure you have specified an existing and accessible database.');
 
-        }
-
         // first, clear everything in the database
-        mysql_query('TRUNCATE TABLE mptt');
+        mysqli_query($connection, 'TRUNCATE TABLE mptt');
 
         // include the Zebra_Mptt class
         require '../Zebra_Mptt.php';
 
         // instantiate the Zebra_Mptt object
-        $mptt = new Zebra_Mptt();
+        $mptt = new Zebra_Mptt($connection);
 
         // populate the table
 
@@ -68,23 +56,29 @@
         $yellow = $mptt->add($fruit, 'Yellow');
 
         // add a fruit of each color
-        $mptt->add($red, 'Cherry');
-        $mptt->add($yellow, 'Banana');
+        $cherry = $mptt->add($red, 'Cherry');
+        $banana = $mptt->add($yellow, 'Banana');
+
+        // add a color, but in the wrong position
+        $orange = $mptt->add($banana, 'Orange');
+
+        // now move it to fruits, after the "red" node
+        $orange = $mptt->move($orange, $red, 'after');
 
         // add two kinds of meat
-        $mptt->add($meat, 'Beef');
-        $mptt->add($meat, 'Pork');
+        $meat = $mptt->add($meat, 'Beef');
+        $pork = $mptt->add($meat, 'Pork');
 
-        // get children of 'Red'
-        print_r('<p>Children of "Red"');
+        // get descendants of 'Red'
+        print_r('<p>Descendants of "Red"');
         print_r('<pre>');
-        print_r($mptt->get_children($red));
+        print_r($mptt->get_descendants($red, false));
         print_r('</pre>');
 
-        // get children of 'Meat'
-        print_r('<p>Children of "Meat"');
+        // get descendants of 'Meat'
+        print_r('<p>Descendants of "Meat"');
         print_r('<pre>');
-        print_r($mptt->get_children($meat));
+        print_r($mptt->get_descendants($meat, false));
         print_r('</pre>');
 
         // data in the database as a multidimensional array
@@ -96,5 +90,4 @@
         ?>
 
     </body>
-
 </html>
